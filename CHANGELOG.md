@@ -15,3 +15,9 @@
 - OCI pipeline для кастомных Proxy-Wasm плагинов.
 - Preflight, smoke-test и documentation index.
 - Security policy и contribution guidelines.
+
+### Fixed
+
+- Референсный плагин приведён к актуальному Higress Wasm Go SDK и сборке
+  `GOOS=wasip1 GOARCH=wasm`.
+- Workflow публикации плагина нормализует OCI-reference и требует explicit tag.

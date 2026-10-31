@@ -222,7 +222,7 @@ Proxy-Wasm source
   ghcr.io/ORG/higress-plugin-example-header:0.1.0
 ```
 
-Если локальный Go/TinyGo отсутствует:
+Если локальный Go отсутствует:
 
 ```bash
 BUILD_IN_DOCKER=1 \

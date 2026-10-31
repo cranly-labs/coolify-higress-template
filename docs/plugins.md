@@ -30,12 +30,13 @@ OCI-образ выполняет роль immutable distribution envelope. Он
 
 ## SDK и toolchain
 
-Референсная реализация использует Go и TinyGo:
+Референсная реализация использует Go **1.24.1+** и актуальный Higress Wasm
+SDK:
 
-- `github.com/higress-group/wasm-go`;
+- `github.com/higress-group/wasm-go` v1.1.2;
+- `github.com/higress-group/proxy-wasm-go-sdk`;
 - `github.com/tidwall/gjson`;
-- TinyGo target `wasi`;
-- scheduler `none`.
+- сборка: `GOOS=wasip1 GOARCH=wasm go build -buildmode=c-shared`.
 
 Референсный плагин: [`plugins/example-header`](../plugins/example-header).
 Он добавляет настраиваемый request header и демонстрирует разбор конфигурации,

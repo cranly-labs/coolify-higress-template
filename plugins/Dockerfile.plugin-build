@@ -2,17 +2,19 @@
 #
 # Reproducible in-Docker build for a Higress Proxy-Wasm plugin.
 #
-# The builder stage isolates the Go/TinyGo toolchain. The final stage contains
-# only the OCI artifact contract: /plugin.wasm in a scratch image.
+# The builder stage pins the Go toolchain required by the current Higress Wasm
+# SDK. The final stage contains only the OCI artifact contract: /plugin.wasm in
+# a scratch image.
 #
 # Build context: the plugin directory.
-FROM tinygo/tinygo:0.34.0 AS build
+FROM golang:1.24.1 AS build
 
 WORKDIR /src
-COPY . .
+COPY go.mod go.sum ./
+RUN go mod download
 
-RUN go mod tidy \
- && tinygo build -o /out/plugin.wasm -target=wasi -scheduler=none .
+COPY . .
+RUN GOOS=wasip1 GOARCH=wasm go build -buildmode=c-shared -o /out/plugin.wasm .
 
 FROM scratch
 

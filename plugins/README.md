@@ -39,7 +39,7 @@ scripts/build-plugin.sh        # Build + publish pipeline
 
 ### Локальная сборка
 
-Требования: Go, TinyGo, Docker Buildx.
+Требования: Go **1.24.1+**, Docker Buildx.
 
 ```bash
 make -C plugins/example-header build

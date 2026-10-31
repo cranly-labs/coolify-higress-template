@@ -6,8 +6,8 @@
 package main
 
 import (
-	"github.com/higress-group/wasm-go/pkg/log"
-	"github.com/higress-group/wasm-go/pkg/types"
+	"github.com/higress-group/proxy-wasm-go-sdk/proxywasm"
+	"github.com/higress-group/proxy-wasm-go-sdk/proxywasm/types"
 	"github.com/higress-group/wasm-go/pkg/wrapper"
 	"github.com/tidwall/gjson"
 )
@@ -18,8 +18,8 @@ func main() {}
 func init() {
 	wrapper.SetCtx(
 		"example-header",
-		wrapper.ParseConfigBy(parseConfig),
-		wrapper.ProcessRequestHeadersBy(onHttpRequestHeaders),
+		wrapper.ParseConfig(parseConfig),
+		wrapper.ProcessRequestHeaders(onHttpRequestHeaders),
 	)
 }
 
@@ -30,7 +30,7 @@ type Config struct {
 }
 
 // parseConfig applies defaults so the plugin remains safe with an empty config.
-func parseConfig(json gjson.Result, config *Config, logger log.Log) error {
+func parseConfig(json gjson.Result, config *Config) error {
 	config.HeaderName = json.Get("header_name").String()
 	config.HeaderValue = json.Get("header_value").String()
 
@@ -44,7 +44,9 @@ func parseConfig(json gjson.Result, config *Config, logger log.Log) error {
 }
 
 // onHttpRequestHeaders mutates the request before it reaches the upstream.
-func onHttpRequestHeaders(ctx wrapper.HttpContext, config Config, logger log.Log) types.Action {
-	ctx.SetHttpRequestHeader(config.HeaderName, config.HeaderValue)
+func onHttpRequestHeaders(ctx wrapper.HttpContext, config Config) types.Action {
+	if err := proxywasm.ReplaceHttpRequestHeader(config.HeaderName, config.HeaderValue); err != nil {
+		proxywasm.LogErrorf("failed to set request header %q: %v", config.HeaderName, err)
+	}
 	return types.ActionContinue
 }

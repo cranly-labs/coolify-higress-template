@@ -4,7 +4,7 @@ set -euo pipefail
 # Builds and publishes a Higress Proxy-Wasm plugin as an OCI artifact.
 #
 # Modes:
-#   default             host Go/TinyGo toolchain, package with Dockerfile.plugin
+#   default             host Go toolchain, package with Dockerfile.plugin
 #   BUILD_IN_DOCKER=1   reproducible in-Docker build with Dockerfile.plugin-build
 #   PUSH=0              build locally without publishing
 #
@@ -35,7 +35,7 @@ dockerfile="$repo_root/plugins/Dockerfile.plugin"
 platform="${PLUGIN_PLATFORM:-linux/amd64}"
 
 if [[ "${BUILD_IN_DOCKER:-0}" == "1" ]]; then
-  # Toolchain isolation: TinyGo runs in the builder stage; only the artifact
+  # Toolchain isolation: Go runs in the builder stage; only the artifact
   # reaches the final scratch image.
   dockerfile="$repo_root/plugins/Dockerfile.plugin-build"
 else
