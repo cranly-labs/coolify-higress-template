@@ -1,0 +1,48 @@
+# Release workflow for custom Higress Proxy-Wasm plugins.
+#
+# Produces a scratch OCI artifact from Dockerfile.plugin-build and attaches
+# provenance/SBOM attestations for supply-chain verification.
+name: Plugin artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin directory under plugins/
+        required: true
+        default: example-header
+      image:
+        description: Target GHCR OCI reference, e.g. ghcr.io/ORG/plugin:0.1.0
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: plugin-${{ inputs.plugin }}-${{ inputs.image }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: plugins/${{ inputs.plugin }}
+          file: plugins/Dockerfile.plugin-build
+          platforms: linux/amd64
+          push: true
+          provenance: true
+          sbom: true
+          tags: ${{ inputs.image }}

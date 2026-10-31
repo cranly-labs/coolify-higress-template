@@ -1,0 +1,12 @@
+# Optional direct-ingress overlay.
+#
+# Required only when the edge proxy cannot satisfy protocol requirements such as
+# mTLS, end-to-end TLS, gRPC or HTTP/2. In this mode DNS points directly to the
+# host, and certificates and firewall policy are owned by the operator.
+#
+# Copy to docker-compose.override.yml only when this mode is intentional.
+services:
+  higress:
+    ports:
+      - "8081:8080"
+      - "8444:8443"

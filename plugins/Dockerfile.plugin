@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1.7
+#
+# OCI distribution artifact for a single Higress Proxy-Wasm plugin.
+#
+# This image is not a runnable service. Higress pulls it as an immutable
+# envelope and reads /plugin.wasm. Build context: the plugin directory.
+FROM scratch
+
+ARG PLUGIN_FILE=plugin.wasm
+
+COPY --chmod=0444 ${PLUGIN_FILE} /plugin.wasm
+
+LABEL org.opencontainers.image.title="Higress Wasm plugin"
+LABEL org.opencontainers.image.description="Proxy-Wasm plugin distributed as an OCI artifact"

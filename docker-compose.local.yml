@@ -1,0 +1,10 @@
+# Local verification overlay. Not part of the Coolify production contract.
+#
+# Publishes direct ports for operator access on a workstation. Do not include
+# this file on a Coolify host.
+services:
+  higress:
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+      - "8001:8001"

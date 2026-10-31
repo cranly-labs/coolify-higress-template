@@ -1,0 +1,95 @@
+# Higress Coolify Reference Architecture
+#
+# Deployment profile:
+#   - single-node, production-oriented Docker Compose topology;
+#   - Coolify owns public ingress and TLS on 80/443;
+#   - Higress data plane and control plane remain internal-only;
+#   - state is isolated in a named volume and survives container replacement.
+#
+# Public routing contract:
+#   SERVICE_FQDN_HIGRESS_8080 -> data plane
+#   SERVICE_FQDN_HIGRESS_8001 -> control plane
+#
+# HIGRESS_IMAGE is deliberately mandatory: production deployments must pin an
+# immutable tag and digest.
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  higress:
+    # Immutable runtime reference. Resolve with scripts/pin-image.sh.
+    image: ${HIGRESS_IMAGE:?Set HIGRESS_IMAGE to a pinned Higress all-in-one tag or digest}
+    platform: ${HIGRESS_PLATFORM:-linux/amd64}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+
+    environment:
+      TZ: ${TZ:-UTC}
+
+      # Control-plane credentials. Applied during first console initialization.
+      HIGRESS_CONSOLE_ADMIN_USER: ${HIGRESS_CONSOLE_ADMIN_USER:-admin}
+      HIGRESS_CONSOLE_ADMIN_PASSWORD: ${HIGRESS_CONSOLE_ADMIN_PASSWORD:?Set HIGRESS_CONSOLE_ADMIN_PASSWORD in Coolify}
+      HIGRESS_CONSOLE_OPENAPI_JWT_SECRET: ${HIGRESS_CONSOLE_OPENAPI_JWT_SECRET:?Set HIGRESS_CONSOLE_OPENAPI_JWT_SECRET in Coolify}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
+
+      # Spring Boot console behind the Coolify edge proxy. Ensures redirects and
+      # generated links use the external HTTPS origin.
+      SERVER_FORWARD_HEADERS_STRATEGY: ${SERVER_FORWARD_HEADERS_STRATEGY:-framework}
+
+    # Port separation preserves the data-plane/control-plane boundary.
+    expose:
+      - "8080"
+      - "8443"
+      - "8001"
+
+    volumes:
+      # State boundary: Nacos metadata and console data survive container
+      # replacement and image upgrades.
+      - higress-data:/data
+
+    healthcheck:
+      # Control-plane readiness is the container readiness signal. During a
+      # control-plane restart, the data plane continues serving the last applied
+      # configuration.
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://127.0.0.1:8001/ >/dev/null 2>&1 ||
+          wget -qO- http://127.0.0.1:8001/ >/dev/null 2>&1 ||
+          bash -c 'exec 3<>/dev/tcp/127.0.0.1/8001' >/dev/null 2>&1 ||
+          exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 6
+      start_period: 180s
+
+    logging: *default-logging
+
+    security_opt:
+      - no-new-privileges:true
+
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    # Resource envelope for a small production footprint. Tune per workload.
+    deploy:
+      resources:
+        limits:
+          cpus: "${HIGRESS_CPU_LIMIT:-2.0}"
+          memory: "${HIGRESS_MEM_LIMIT:-2g}"
+        reservations:
+          cpus: "${HIGRESS_CPU_RESERVATION:-0.25}"
+          memory: "${HIGRESS_MEM_RESERVATION:-512m}"
+
+volumes:
+  higress-data:
+    # Stable identity across Coolify redeploys. Use a unique value per
+    # environment when staging and production share a Docker host.
+    name: ${HIGRESS_VOLUME_NAME:-higress-data}

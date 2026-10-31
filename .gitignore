@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+data/
+backups/
+plugins/**/plugin.wasm
+.DS_Store
+.idea/
+.vscode/

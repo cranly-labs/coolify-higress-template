@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1.7
+#
+# Reproducible in-Docker build for a Higress Proxy-Wasm plugin.
+#
+# The builder stage isolates the Go/TinyGo toolchain. The final stage contains
+# only the OCI artifact contract: /plugin.wasm in a scratch image.
+#
+# Build context: the plugin directory.
+FROM tinygo/tinygo:0.34.0 AS build
+
+WORKDIR /src
+COPY . .
+
+RUN go mod tidy \
+ && tinygo build -o /out/plugin.wasm -target=wasi -scheduler=none .
+
+FROM scratch
+
+COPY --chmod=0444 --from=build /out/plugin.wasm /plugin.wasm
+
+LABEL org.opencontainers.image.title="Higress Wasm plugin"
+LABEL org.opencontainers.image.description="Proxy-Wasm plugin distributed as an OCI artifact"

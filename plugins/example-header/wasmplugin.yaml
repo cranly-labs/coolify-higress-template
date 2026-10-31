@@ -1,0 +1,16 @@
+# Reference WasmPlugin manifest.
+#
+# In standalone mode, Higress Console is the authoritative control plane. This
+# manifest documents the runtime contract for API automation and CI.
+apiVersion: extensions.higress.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: example-header
+  namespace: higress-system
+spec:
+  url: oci://ghcr.io/ORG/higress-plugin-example-header:0.1.0
+  phase: UNSPECIFIED_PHASE
+  priority: 100
+  config:
+    header_name: x-higress-plugin
+    header_value: example
