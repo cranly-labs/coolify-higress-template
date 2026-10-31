@@ -214,7 +214,8 @@ Proxy-Wasm source
 - независимый supply chain для плагинов;
 - отсутствие зависимости от внутренних путей all-in-one образа.
 
-Сборка и публикация:
+Сборка и публикация. В build-командах и CI используется Docker image reference
+без префикса `oci://`:
 
 ```bash
 ./scripts/build-plugin.sh plugins/example-header \

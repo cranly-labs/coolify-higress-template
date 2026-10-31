@@ -153,4 +153,7 @@ spec:
 
 Workflow `.github/workflows/plugin-image.yml` собирает плагин через
 `Dockerfile.plugin-build`, публикует OCI-образ в GHCR и формирует
-provenance/SBOM. Для ARM-host платформа меняется на `linux/arm64`.
+provenance/SBOM. В поле image указывается Docker image reference **без**
+префикса `oci://`; workflow нормализует префикс, если он был передан по ошибке.
+Explicit tag обязателен, `latest` отклоняется. Для ARM-host платформа меняется
+на `linux/arm64`.

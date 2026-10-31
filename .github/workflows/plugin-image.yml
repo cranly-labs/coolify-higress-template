@@ -12,7 +12,7 @@ on:
         required: true
         default: example-header
       image:
-        description: Target GHCR OCI reference, e.g. ghcr.io/ORG/plugin:0.1.0
+        description: Target GHCR image reference without oci://, e.g. ghcr.io/ORG/plugin:0.1.0
         required: true
 
 permissions:
@@ -31,6 +31,33 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Normalize image reference
+        id: image
+        env:
+          INPUT_IMAGE: ${{ inputs.image }}
+        run: |
+          image="${INPUT_IMAGE#oci://}"
+          if [[ -z "$image" ]]; then
+            echo "image reference is empty" >&2
+            exit 1
+          fi
+          if [[ "$image" == "oci://"* ]]; then
+            echo "invalid image reference: $image" >&2
+            exit 1
+          fi
+
+          last_component="${image##*/}"
+          if [[ "$last_component" != *:* ]]; then
+            echo "image reference must include an explicit tag, e.g. :0.1.0" >&2
+            exit 1
+          fi
+          if [[ "${last_component##*:}" == "latest" ]]; then
+            echo "latest tag is not allowed for production artifacts" >&2
+            exit 1
+          fi
+
+          echo "ref=$image" >> "$GITHUB_OUTPUT"
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -45,4 +72,4 @@ jobs:
           push: true
           provenance: true
           sbom: true
-          tags: ${{ inputs.image }}
+          tags: ${{ steps.image.outputs.ref }}
